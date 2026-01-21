@@ -5,9 +5,9 @@ import joblib
 import os
 
 # 1. Load the trained components
-model_path = "hand_sign_model.pkl"
-scaler_path = "scaler.pkl"
-label_encoder_path = "label_encoder.pkl"
+model_path = "models/hand_sign_model.pkl"
+scaler_path = "models/scaler.pkl"
+label_encoder_path = "models/label_encoder.pkl"
 
 if not all(os.path.exists(f) for f in [model_path, scaler_path, label_encoder_path]):
     print("Error: Model artifacts not found. Please run train_model.py first.")

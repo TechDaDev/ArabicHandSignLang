@@ -78,9 +78,9 @@ st.markdown("""
 # --- LOAD MODELS ---
 @st.cache_resource
 def load_assets():
-    model = joblib.load("hand_sign_model.pkl")
-    scaler = joblib.load("scaler.pkl")
-    label_encoder = joblib.load("label_encoder.pkl")
+    model = joblib.load("models/hand_sign_model.pkl")
+    scaler = joblib.load("models/scaler.pkl")
+    label_encoder = joblib.load("models/label_encoder.pkl")
     return model, scaler, label_encoder
 
 try:

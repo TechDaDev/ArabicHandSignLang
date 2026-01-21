@@ -68,7 +68,7 @@ for name, model in models.items():
     print(f"{name} Accuracy: {acc:.4f}")
     
     # Save report to a separate file
-    report_filename = f"report_{name.lower()}.txt"
+    report_filename = f"reports/report_{name.lower()}.txt"
     with open(report_filename, "w") as f:
         f.write(f"Model: {name}\n")
         f.write(f"Accuracy: {acc:.4f}\n\n")
@@ -86,16 +86,16 @@ print(f"\n--- Comparison Complete ---")
 print(f"Best Model: {best_model_name} with Accuracy: {best_accuracy:.4f}")
 
 # Save the best model and remaining artifacts
-joblib.dump(best_model, "hand_sign_model.pkl")
-joblib.dump(scaler, "scaler.pkl")
-joblib.dump(le, "label_encoder.pkl")
+joblib.dump(best_model, "models/hand_sign_model.pkl")
+joblib.dump(scaler, "models/scaler.pkl")
+joblib.dump(le, "models/label_encoder.pkl")
 
 # Also save a summary file
-with open("classification_report.txt", "w") as f:
+with open("reports/classification_report.txt", "w") as f:
     f.write(f"Best Model: {best_model_name}\n")
     f.write(f"Best Accuracy: {best_accuracy:.4f}\n\n")
     f.write(f"Detailed report for {best_model_name}:\n")
     y_pred_best = best_model.predict(X_test_scaled)
     f.write(classification_report(y_test, y_pred_best, target_names=le.classes_))
 
-print("Best model and artifacts saved successfully.")
+print("Best model and artifacts saved successfully in 'models/' folder.")
