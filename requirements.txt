@@ -1,0 +1,10 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+opencv-python
+mediapipe==0.10.13
+joblib
+streamlit
+xgboost
