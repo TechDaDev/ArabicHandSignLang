@@ -65,10 +65,37 @@ st.markdown("""
         background: linear-gradient(90deg, #00ff88, #60efff);
         transition: width 0.3s ease-in-out;
     }
-    .sidebar-logo {
-        display: flex;
-        justify-content: center;
+    .info-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(5px);
+        border-radius: 15px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 4px solid #00ff88;
+        margin-top: 40px;
+    }
+    .info-header {
+        font-family: 'Orbitron', sans-serif;
+        color: #00ff88;
+        font-size: 1.4rem;
         margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    .info-text {
+        color: #ccd6f6;
+        line-height: 1.8;
+    }
+    .arabic-text {
+        direction: rtl;
+        text-align: right;
+        font-family: 'Roboto', sans-serif;
     }
     footer {visibility: hidden;}
     #MainMenu {visibility: hidden;}
@@ -89,26 +116,68 @@ except Exception as e:
     st.error(f"Failed to load models: {e}")
     st.stop()
 
-# --- MEDIAPIPE SETUP (CACHED) ---
+# --- MEDIAPIPE TASKS SETUP ---
+from mediapipe.tasks.python import vision
+from mediapipe import Image, ImageFormat
+
 @st.cache_resource
-def get_hands_model():
-    mp_hands = mp.solutions.hands
-    return mp_hands.Hands(
-        static_image_mode=False,
-        max_num_hands=1,
-        min_detection_confidence=0.7,
+def get_hand_landmarker():
+    # Ensure the model file is present (downloading it if necessary)
+    model_path = "hand_landmarker.task"
+    
+    base_options = mp.tasks.BaseOptions(model_asset_path=model_path)
+    options = vision.HandLandmarkerOptions(
+        base_options=base_options,
+        running_mode=vision.RunningMode.IMAGE,
+        num_hands=1,
+        min_hand_detection_confidence=0.7,
+        min_hand_presence_confidence=0.7,
         min_tracking_confidence=0.7
     )
+    return vision.HandLandmarker.create_from_options(options)
 
-hands = get_hands_model()
-mp_hands = mp.solutions.hands
-mp_draw = mp.solutions.drawing_utils
+landmarker = get_hand_landmarker()
 
-def extract_landmarks(hand_landmarks):
+import pandas as pd
+
+def extract_landmarks(hand_landmarks_list):
+    # hand_landmarks_list is a list of NormalizedLandmark objects
     landmarks = []
-    for lm in hand_landmarks.landmark:
+    for lm in hand_landmarks_list:
         landmarks.extend([lm.x, lm.y, lm.z])
-    return np.array(landmarks).reshape(1, -1)
+    
+    # Create feature names to match training (x0, y0, z0, ..., x20, y20, z20)
+    feature_names = []
+    for i in range(21):
+        feature_names.extend([f'x{i}', f'y{i}', f'z{i}'])
+        
+    return pd.DataFrame([landmarks], columns=feature_names)
+
+# --- CUSTOM DRAWING FUNCTIONS ---
+HAND_CONNECTIONS = [
+    (0, 1), (1, 2), (2, 3), (3, 4),    # Thumb
+    (0, 5), (5, 6), (6, 7), (7, 8),    # Index
+    (5, 9), (9, 10), (10, 11), (11, 12), # Middle
+    (9, 13), (13, 14), (14, 15), (15, 16), # Ring
+    (13, 17), (0, 17), (17, 18), (18, 19), (19, 20) # Pinky
+]
+
+def draw_hand_landmarks(image, hand_landmarks_list):
+    h, w, _ = image.shape
+    # Draw connections
+    for start_idx, end_idx in HAND_CONNECTIONS:
+        start_pt = hand_landmarks_list[start_idx]
+        end_pt = hand_landmarks_list[end_idx]
+        cv2.line(image, 
+                 (int(start_pt.x * w), int(start_pt.y * h)), 
+                 (int(end_pt.x * w), int(end_pt.y * h)), 
+                 (0, 255, 136), 2) # Neon Green
+    
+    # Draw points
+    for lm in hand_landmarks_list:
+        cx, cy = int(lm.x * w), int(lm.y * h)
+        cv2.circle(image, (cx, cy), 5, (255, 255, 255), -1) # White points
+        cv2.circle(image, (cx, cy), 6, (0, 255, 136), 1) # Green outline
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -122,22 +191,6 @@ with st.sidebar:
     confidence_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.45, key="conf_slider")
     
     st.info("💡 Scale landmarks are extracted using MediaPipe and classified using a pre-trained MLP model.")
-    
-    st.markdown("---")
-    st.markdown("### 🤖 About the Model / حول النموذج")
-    
-    st.markdown("""
-    **Algorithm:** Multi-Layer Perceptron (MLP)
-    
-    **Why?** MLP was chosen after benchmarking against SVM, Random Forest, KNN, and XGBoost. It effectively captures complex patterns in landmark coordinates, delivering the highest accuracy (96.36%).
-    """)
-    
-    st.markdown("""
-    <div style="direction: rtl; text-align: right;">
-    <b>الخوارزمية:</b> الشبكة العصبية (MLP)<br>
-    <b>لماذا؟</b> تم اختيار MLP بعد المقارنة مع عدة نماذج. تتميز بقدرتها العالية على فهم الأنماط المعقدة لنقاط اليد، وحققت أعلى دقة (96.36٪).
-    </div>
-    """, unsafe_allow_html=True)
 
 # --- MAIN CONTENT ---
 st.markdown("<h1 style='text-align: center; color: white;'>Arabic Sign Language Recognition</h1>", unsafe_allow_html=True)
@@ -173,6 +226,32 @@ with col2:
     
     update_prediction_card()
 
+# --- ENHANCED MODEL INFO SECTION ---
+st.markdown("""
+<div class="info-card">
+    <div class="info-grid">
+        <div class="info-text">
+            <div class="info-header" style="margin-top: 0;">
+                <span>🤖</span> About the Model
+            </div>
+            <strong>Algorithm:</strong> Multi-Layer Perceptron (MLP)<br><br>
+            <strong>Why MLP?</strong> This neural network architecture was selected after rigorous benchmarking against SVM, Random Forest, KNN, and XGBoost. 
+            It excels at mapping the complex 3D spatial relationships between hand landmarks, achieving an impressive 
+            <span style="color: #00ff88; font-weight: bold;">96.36% accuracy</span>.
+        </div>
+        <div class="info-text arabic-text">
+            <div class="info-header" style="margin-top: 0; justify-content: flex-end;">
+                حول النموذج <span style="margin-left: 15px;">🤖</span>
+            </div>
+            <strong>الخوارزمية:</strong> الشبكة العصبية (MLP)<br><br>
+            <strong>لماذا MLP؟</strong> تم اختيار بنية الشبكة العصبية هذه بعد إجراء مقارنات دقيقة مع خوارزميات أخرى. 
+            تتفوق في فهم العلاقات المكانية المعقدة ثلاثية الأبعاد لنقاط اليد، مما أدى إلى تحقيق دقة مذهلة تصل إلى 
+            <span style="color: #00ff88; font-weight: bold;">96.36٪</span>.
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # --- LOGIC WITH RETRY ---
 if run_app:
     # Give the OS a moment to release the camera if this is a rerun
@@ -200,15 +279,22 @@ if run_app:
                     break
                     
                 frame = cv2.flip(frame, 1)
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                result = hands.process(rgb)
+                # Convert BGR to RGB
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # Convert to MediaPipe Image
+                mp_image = Image(image_format=ImageFormat.SRGB, data=rgb_frame)
+                
+                # Perform hand landmark detection
+                result = landmarker.detect(mp_image)
                 
                 current_letter = "---"
                 confidence = 0
                 
-                if result.multi_hand_landmarks:
-                    for hand_landmarks in result.multi_hand_landmarks:
-                        mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                if result.hand_landmarks:
+                    for hand_landmarks in result.hand_landmarks:
+                        # Use custom drawing function
+                        draw_hand_landmarks(frame, hand_landmarks)
                         
                         features = extract_landmarks(hand_landmarks)
                         features_scaled = scaler.transform(features)
