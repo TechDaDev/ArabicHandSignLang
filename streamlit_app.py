@@ -181,9 +181,10 @@ def draw_hand_landmarks(image, hand_landmarks_list):
 
 # --- SIDEBAR ---
 with st.sidebar:
-    logo_path = "/home/zeus3000/PycharmProjects/hand_signs/logo/coai_logo.png"
+    logo_path = os.path.join("logo", "coai_logo.png")
     if os.path.exists(logo_path):
-        st.image(logo_path, width=300)
+        st.image(logo_path, width="stretch")
+        st.markdown("<br>", unsafe_allow_html=True)
     
     st.title("Settings")
     # Using key to preserve state across reruns better
@@ -193,7 +194,7 @@ with st.sidebar:
     st.info("💡 Scale landmarks are extracted using MediaPipe and classified using a pre-trained MLP model.")
 
 # --- MAIN CONTENT ---
-st.markdown("<h1 style='text-align: center; color: white;'>Arabic Sign Language Recognition</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: white;'>Arabic Hand Sign Language Recognition</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #8892b0; font-size: 1.1rem; margin-bottom: 5px;'>College of Artificial Intelligence / Department of Biomedical Applications</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #8892b0; font-size: 1.1rem; margin-bottom: 20px; direction: rtl;'>كلية الذكاء الاصطناعي / قسم التطبيقات الطبية الحيوية</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #00ff88; font-weight: bold;'>High-precision real-time hand sign interpretation</p>", unsafe_allow_html=True)
@@ -205,7 +206,7 @@ CAM_WIDTH = 640
 
 with col1:
     st.markdown("### Camera Feed")
-    FRAME_WINDOW = st.image([], width=CAM_WIDTH)
+    FRAME_WINDOW = st.image([], width="stretch")
 
 with col2:
     st.markdown("### Interpretation")
@@ -309,7 +310,7 @@ if run_app:
                         else:
                             current_letter = "Scanning..."
 
-                FRAME_WINDOW.image(frame, channels="BGR", width=CAM_WIDTH)
+                FRAME_WINDOW.image(frame, channels="BGR", width="stretch")
                 update_prediction_card(current_letter, confidence)
                 
         finally:
