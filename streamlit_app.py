@@ -46,11 +46,17 @@ st.markdown("""
     }
     .prediction-letter {
         color: #00ff88;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 5rem;
+        font-family: 'Roboto', 'Orbitron', 'Arial', sans-serif;
+        font-size: 6rem;
         font-weight: 700;
         margin: 0;
         text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+    }
+    .prediction-sub {
+        color: #8892b0;
+        font-size: 1rem;
+        margin-top: -10px;
+        letter-spacing: 1px;
     }
     .confidence-bar-container {
         width: 100%;
@@ -154,6 +160,16 @@ def extract_landmarks(hand_landmarks_list):
     return pd.DataFrame([landmarks], columns=feature_names)
 
 # --- CUSTOM DRAWING FUNCTIONS ---
+# --- ARABIC LABEL MAPPING ---
+ARABIC_LABELS = {
+    "Ain": "ع", "Al": "ال", "Alef": "أ", "Beh": "ب", "Dad": "ض",
+    "Dal": "د", "Feh": "ف", "Ghain": "غ", "Hah": "ح", "Heh": "هـ",
+    "Jeem": "ج", "Kaf": "ك", "Khah": "خ", "Laa": "لا", "Lam": "ل",
+    "Meem": "م", "Noon": "ن", "Qaf": "ق", "Reh": "ر", "Sad": "ص",
+    "Seen": "س", "Sheen": "ش", "Tah": "ط", "Teh": "ت", "Teh_Marbuta": "ة",
+    "Theh": "ث", "Waw": "و", "Yeh": "ي", "Zah": "ظ", "Zain": "ز", "thal": "ذ"
+}
+
 HAND_CONNECTIONS = [
     (0, 1), (1, 2), (2, 3), (3, 4),    # Thumb
     (0, 5), (5, 6), (6, 7), (7, 8),    # Index
@@ -212,12 +228,13 @@ with col2:
     st.markdown("### Interpretation")
     prediction_placeholder = st.empty()
     
-    def update_prediction_card(letter="---", confidence=0):
+    def update_prediction_card(arabic_letter="---", english_letter="---", confidence=0):
         with prediction_placeholder.container():
             st.markdown(f"""
             <div class="prediction-card">
                 <div class="prediction-title">Detected Letter</div>
-                <div class="prediction-letter">{letter}</div>
+                <div class="prediction-letter">{arabic_letter}</div>
+                <div class="prediction-sub">{english_letter}</div>
                 <div class="prediction-title" style="margin-top: 20px;">Confidence: {confidence:.1%}</div>
                 <div class="confidence-bar-container">
                     <div class="confidence-bar-fill" style="width: {confidence*100}%;"></div>
@@ -279,7 +296,10 @@ if run_app:
                 if not ret:
                     break
                     
+                # Explicitly resize to a standard resolution to save bandwidth/memory
+                frame = cv2.resize(frame, (640, 480))
                 frame = cv2.flip(frame, 1)
+                
                 # Convert BGR to RGB
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
@@ -289,7 +309,8 @@ if run_app:
                 # Perform hand landmark detection
                 result = landmarker.detect(mp_image)
                 
-                current_letter = "---"
+                english_letter = "---"
+                arabic_letter = "---"
                 confidence = 0
                 
                 if result.hand_landmarks:
@@ -306,12 +327,18 @@ if run_app:
                         
                         # Use threshold from slider
                         if confidence >= st.session_state.conf_slider:
-                            current_letter = label_encoder.inverse_transform([pred_idx])[0]
+                            english_letter = label_encoder.inverse_transform([pred_idx])[0]
+                            arabic_letter = ARABIC_LABELS.get(english_letter, english_letter)
                         else:
-                            current_letter = "Scanning..."
+                            english_letter = "Scanning..."
+                            arabic_letter = "جاري الفحص..."
 
                 FRAME_WINDOW.image(frame, channels="BGR", width="stretch")
-                update_prediction_card(current_letter, confidence)
+                update_prediction_card(arabic_letter, english_letter, confidence)
+                
+                # Increased delay to 0.05s (20 FPS) to ensure stability 
+                # across Streamlit's media storage and the browser.
+                time.sleep(0.05)
                 
         finally:
             cap.release()
