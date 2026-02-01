@@ -4,7 +4,7 @@ matplotlib
 seaborn
 scikit-learn
 opencv-python
-mediapipe==0.10.13
+mediapipe
 joblib
 streamlit
 xgboost
