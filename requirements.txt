@@ -8,3 +8,5 @@ mediapipe
 joblib
 streamlit
 xgboost
+gTTS
+playsound==1.2.2
