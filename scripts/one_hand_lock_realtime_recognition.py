@@ -72,7 +72,7 @@ def draw_landmarks(image, hand_landmarks_list):
         start_pt = hand_landmarks_list[start_idx]
         end_pt = hand_landmarks_list[end_idx]
         cv2.line(image, 
-                 (int(start_pt.x * w), int(start_pt.y * h)), 
+                 (int(start_pt.x * w), int(start_pt.y * h)),
                  (int(end_pt.x * w), int(end_pt.y * h)), 
                  (0, 255, 136), 2)
     for lm in hand_landmarks_list:
@@ -236,7 +236,7 @@ SPEAK_COOLDOWN = 0.8       # avoid overlapping sounds too much
 last_speak_time = 0.0
 
 # ===== Speak-on-hand-missing timer =====
-NO_HAND_SPEAK_AFTER = 2.0   # seconds with no hand -> speak current word
+NO_HAND_SPEAK_AFTER = 1.0   # seconds with no hand -> speak current word
 no_hand_start = None
 word_spoken_for_current = False
 
