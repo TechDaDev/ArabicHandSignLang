@@ -2,9 +2,13 @@ from collections.abc import Generator
 from typing import Any
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import settings
+
+
+class Base(DeclarativeBase):
+    """Declarative base class for ORM models."""
 
 
 engine_options: dict[str, Any] = {"pool_pre_ping": True}

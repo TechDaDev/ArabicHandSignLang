@@ -1,8 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from app.db.session import Base
+from app.models.user import User
 
-
-class Base(DeclarativeBase):
-    """Base class for future SQLAlchemy models."""
-
-
-__all__ = ["Base"]
+__all__ = ["Base", "User"]
