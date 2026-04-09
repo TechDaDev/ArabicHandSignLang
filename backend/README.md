@@ -1,22 +1,23 @@
-# Arabic Hand Sign Language Backend API — Phase 1
+# Arabic Hand Sign Language Backend API
 
-This phase sets up the FastAPI foundation for the Arabic Hand Sign Language mobile backend. It includes configuration management, database session wiring, versioned routing under `/api/v1`, OpenAPI docs, and health endpoints.
+A modular `FastAPI` backend for the Arabic Hand Sign Language mobile app. The backend now supports authentication, one-frame landmark inference using the trained ML artifacts, prediction history, sessions, feedback, and saved phrases.
 
-## What is included in Phase 1
+## Implemented Features
 
-- FastAPI application entry point
-- environment-based settings via `.env`
-- SQLAlchemy 2.0 engine and session factory
-- PostgreSQL-ready connection configuration
-- versioned API router at `/api/v1`
-- `GET /api/v1/health`
-- `GET /api/v1/health/db`
-- interactive API docs at `/docs`
+- JWT auth and current-user profile endpoints
+- single-frame one-hand prediction from 21 landmarks / 63 features
+- prediction history storage and retrieval
+- prediction session start / predict / end lifecycle
+- feedback submission linked to prediction records or sessions
+- saved phrase CRUD
+- OpenAPI docs and health endpoints
+- Alembic migration readiness and pytest coverage
 
 ## Project Structure
 
 ```text
 backend/
+├── alembic/
 ├── app/
 │   ├── api/
 │   ├── core/
@@ -24,9 +25,10 @@ backend/
 │   ├── models/
 │   ├── schemas/
 │   ├── services/
-│   ├── utils/
 │   └── main.py
+├── tests/
 ├── .env.example
+├── alembic.ini
 ├── README.md
 └── requirements.txt
 ```
@@ -41,7 +43,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Install packages
+### 2. Install dependencies
 
 ```powershell
 pip install -r requirements.txt
@@ -53,9 +55,13 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Update the PostgreSQL values in `.env` to match your local database.
+Update `.env` for your local PostgreSQL database, or temporarily use SQLite for quick local testing:
 
-### 4. Run the server
+```env
+DATABASE_URL=sqlite:///./app.db
+```
+
+### 4. Run the API server
 
 ```powershell
 uvicorn app.main:app --reload
@@ -63,33 +69,72 @@ uvicorn app.main:app --reload
 
 ## API Docs
 
-Once the server is running, open:
+Open:
 
 - `http://127.0.0.1:8000/docs`
 - `http://127.0.0.1:8000/openapi.json`
 
-## Health Endpoints
+## Test Commands
 
-- `GET http://127.0.0.1:8000/api/v1/health`
-- `GET http://127.0.0.1:8000/api/v1/health/db`
+Run the full minimal backend suite:
 
-Example response:
-
-```json
-{
-  "status": "ok"
-}
+```powershell
+pytest tests -q
 ```
 
-Database response when connected:
+## Migration Commands
 
-```json
-{
-  "status": "ok",
-  "database": "connected"
-}
+From `backend/`:
+
+```powershell
+alembic revision --autogenerate -m "create initial backend schema"
+alembic upgrade head
 ```
 
-## Phase 2 Preview
+## Implemented Endpoint Summary
 
-Phase 2 can build on this foundation with domain models, authentication, and prediction endpoints.
+### Health
+- `GET /api/v1/health`
+- `GET /api/v1/health/db`
+
+### Auth and User
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/users/me`
+- `PATCH /api/v1/users/me`
+
+### Prediction
+- `POST /api/v1/predict/frame`
+
+### Prediction History
+- `GET /api/v1/history/predictions`
+- `GET /api/v1/history/predictions/{id}`
+
+### Sessions
+- `POST /api/v1/sessions/start`
+- `POST /api/v1/sessions/{session_id}/predict-frame`
+- `POST /api/v1/sessions/{session_id}/end`
+- `GET /api/v1/sessions`
+- `GET /api/v1/sessions/{session_id}`
+
+### Feedback
+- `POST /api/v1/feedback`
+- `GET /api/v1/feedback/me`
+
+### Saved Phrases
+- `POST /api/v1/history/phrases`
+- `GET /api/v1/history/phrases`
+- `GET /api/v1/history/phrases/{id}`
+- `PATCH /api/v1/history/phrases/{id}`
+- `DELETE /api/v1/history/phrases/{id}`
+
+## Basic Usage Flow
+
+1. Register a user with `POST /api/v1/auth/register`
+2. Log in with `POST /api/v1/auth/login`
+3. Use the bearer token for protected endpoints
+4. Send one-frame predictions to `POST /api/v1/predict/frame`
+5. Review stored history in `GET /api/v1/history/predictions`
+6. Optionally start and manage a prediction session
+7. Save feedback or phrases as needed

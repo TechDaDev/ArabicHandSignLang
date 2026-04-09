@@ -1,6 +1,6 @@
 API_DESCRIPTION = (
     "FastAPI backend for the Arabic Hand Sign Language mobile application. "
-    "This phase adds authenticated single-frame inference using the existing trained artifacts."
+    "It currently supports authentication, one-frame inference, prediction history, sessions, feedback, and saved phrases."
 )
 
 API_TAGS = [
@@ -8,7 +8,9 @@ API_TAGS = [
     {"name": "auth", "description": "Registration, login, and current-user authentication endpoints."},
     {"name": "users", "description": "Authenticated user profile endpoints."},
     {"name": "predict", "description": "One-frame landmark inference endpoints."},
-    {"name": "history", "description": "Authenticated prediction history endpoints."},
+    {"name": "history", "description": "Authenticated prediction history and saved phrase endpoints."},
+    {"name": "sessions", "description": "Prediction session lifecycle endpoints."},
+    {"name": "feedback", "description": "User feedback endpoints linked to predictions or sessions."},
 ]
 
 ARABIC_LABELS = {
