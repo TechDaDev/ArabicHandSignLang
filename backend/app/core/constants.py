@@ -8,6 +8,7 @@ API_TAGS = [
     {"name": "auth", "description": "Registration, login, and current-user authentication endpoints."},
     {"name": "users", "description": "Authenticated user profile endpoints."},
     {"name": "predict", "description": "One-frame landmark inference endpoints."},
+    {"name": "history", "description": "Authenticated prediction history endpoints."},
 ]
 
 ARABIC_LABELS = {
