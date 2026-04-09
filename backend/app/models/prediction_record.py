@@ -15,6 +15,12 @@ class PredictionRecord(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    session_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("prediction_sessions.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
     predicted_label: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     arabic_label: Mapped[str] = mapped_column(String(100), nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
