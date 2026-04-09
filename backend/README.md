@@ -1,55 +1,95 @@
-# Arabic Hand Sign Language Backend API
+# Arabic Hand Sign Language Backend API — Phase 1
 
-A modular FastAPI backend for a Flutter mobile application that sends one-hand MediaPipe landmarks to the server for Arabic sign-letter prediction.
+This phase sets up the FastAPI foundation for the Arabic Hand Sign Language mobile backend. It includes configuration management, database session wiring, versioned routing under `/api/v1`, OpenAPI docs, and health endpoints.
 
-## Features
+## What is included in Phase 1
 
-- JWT authentication
-- SQLAlchemy 2.0 models for users, sessions, history, saved phrases, and feedback
-- Inference using the existing ML artifacts in the repository
-- Centralized Arabic label mapping
-- Validation for 21 landmarks / 63 features
-- Pytest coverage for the core API flow
+- FastAPI application entry point
+- environment-based settings via `.env`
+- SQLAlchemy 2.0 engine and session factory
+- PostgreSQL-ready connection configuration
+- versioned API router at `/api/v1`
+- `GET /api/v1/health`
+- `GET /api/v1/health/db`
+- interactive API docs at `/docs`
 
-## Project Layout
+## Project Structure
 
 ```text
 backend/
 ├── app/
-├── alembic/
-├── tests/
+│   ├── api/
+│   ├── core/
+│   ├── db/
+│   ├── models/
+│   ├── schemas/
+│   ├── services/
+│   ├── utils/
+│   └── main.py
 ├── .env.example
+├── README.md
 └── requirements.txt
 ```
 
-## Quick Start
+## Setup
 
-```bash
+### 1. Create and activate a virtual environment
+
+```powershell
 cd backend
 python -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
+```
+
+### 2. Install packages
+
+```powershell
 pip install -r requirements.txt
-copy .env.example .env
+```
+
+### 3. Create your environment file
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Update the PostgreSQL values in `.env` to match your local database.
+
+### 4. Run the server
+
+```powershell
 uvicorn app.main:app --reload
 ```
 
-Open:
+## API Docs
+
+Once the server is running, open:
+
 - `http://127.0.0.1:8000/docs`
-- `http://127.0.0.1:8000/health`
+- `http://127.0.0.1:8000/openapi.json`
 
-## Main API Endpoints
+## Health Endpoints
 
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/users/me`
-- `POST /api/v1/predict`
-- `GET/POST /api/v1/sessions`
-- `GET /api/v1/history/predictions`
-- `GET/POST /api/v1/history/phrases`
-- `GET/POST /api/v1/feedback`
+- `GET http://127.0.0.1:8000/api/v1/health`
+- `GET http://127.0.0.1:8000/api/v1/health/db`
 
-## Notes
+Example response:
 
-- The backend reuses `models/hand_sign_model.pkl`, `models/scaler.pkl`, and `models/label_encoder.pkl` from the repository root.
-- Production should point `DATABASE_URL` to PostgreSQL.
-- For tests and quick local runs, SQLite is supported as a simple fallback.
+```json
+{
+  "status": "ok"
+}
+```
+
+Database response when connected:
+
+```json
+{
+  "status": "ok",
+  "database": "connected"
+}
+```
+
+## Phase 2 Preview
+
+Phase 2 can build on this foundation with domain models, authentication, and prediction endpoints.

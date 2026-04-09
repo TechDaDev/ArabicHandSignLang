@@ -1,41 +1,35 @@
 from functools import lru_cache
-from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-BACKEND_DIR = Path(__file__).resolve().parents[2]
-REPO_ROOT = Path(__file__).resolve().parents[3]
-
-
 class Settings(BaseSettings):
-    """Application configuration loaded from environment variables."""
+    """Typed application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False,
+        case_sensitive=True,
         extra="ignore",
     )
 
-    app_name: str = "Arabic Hand Sign Language API"
-    app_version: str = "0.1.0"
-    debug: bool = False
+    APP_NAME: str = "Arabic Hand Sign Language Backend API"
+    API_V1_STR: str = "/api/v1"
+    DEBUG: bool = True
+    SECRET_KEY: str = "change-me-for-local-development"
 
-    api_v1_prefix: str = "/api/v1"
-    secret_key: str = "change-this-secret-before-production"
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60 * 24
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "arabic_hand_sign_db"
 
-    database_url: str = f"sqlite:///{(BACKEND_DIR / 'app.db').as_posix()}"
-    postgres_database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/arabic_sign_api"
-
-    model_path: str = str(REPO_ROOT / "models" / "hand_sign_model.pkl")
-    scaler_path: str = str(REPO_ROOT / "models" / "scaler.pkl")
-    label_encoder_path: str = str(REPO_ROOT / "models" / "label_encoder.pkl")
-    top_k_predictions: int = 3
-
-    cors_origins: list[str] = ["*"]
+    @property
+    def database_url(self) -> str:
+        return (
+            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
 
 @lru_cache(maxsize=1)

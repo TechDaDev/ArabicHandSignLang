@@ -1,10 +1,6 @@
-class AppError(Exception):
-    """Base application error for clean API responses."""
+class AppException(Exception):
+    """Base exception for backend application errors."""
 
 
-class InvalidLandmarkPayload(AppError):
-    """Raised when the landmark request body is malformed."""
-
-
-class ModelArtifactsUnavailable(AppError):
-    """Raised when the ML artifacts cannot be loaded."""
+class DatabaseConnectionError(AppException):
+    """Raised when the application cannot reach the configured database."""

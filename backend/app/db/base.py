@@ -1,15 +1,8 @@
-from app.db.session import Base
-from app.models.feedback import Feedback
-from app.models.prediction_record import PredictionRecord
-from app.models.prediction_session import PredictionSession
-from app.models.saved_phrase import SavedPhrase
-from app.models.user import User
+from sqlalchemy.orm import DeclarativeBase
 
-__all__ = [
-    "Base",
-    "User",
-    "PredictionSession",
-    "PredictionRecord",
-    "SavedPhrase",
-    "Feedback",
-]
+
+class Base(DeclarativeBase):
+    """Base class for future SQLAlchemy models."""
+
+
+__all__ = ["Base"]
