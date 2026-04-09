@@ -1,7 +1,11 @@
 venv/
+.venv1/
 __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 .idea/
 .vscode/
 *.pyc
+*.db
+*.sqlite3
+backend/.env
