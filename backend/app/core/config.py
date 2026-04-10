@@ -5,7 +5,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -32,10 +31,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "arabic_hand_sign_db"
     DATABASE_URL: str | None = None
 
-    MODEL_DIR: str = str(REPO_ROOT / "models")
-    MODEL_PATH: str = str(REPO_ROOT / "models" / "hand_sign_model.pkl")
-    SCALER_PATH: str = str(REPO_ROOT / "models" / "scaler.pkl")
-    LABEL_ENCODER_PATH: str = str(REPO_ROOT / "models" / "label_encoder.pkl")
+    MODEL_DIR: str = str(BASE_DIR / "models")
+    MODEL_PATH: str = str(BASE_DIR / "models" / "hand_sign_model.pkl")
+    SCALER_PATH: str = str(BASE_DIR / "models" / "scaler.pkl")
+    LABEL_ENCODER_PATH: str = str(BASE_DIR / "models" / "label_encoder.pkl")
 
     @staticmethod
     def _normalize_database_url(url: str) -> str:
