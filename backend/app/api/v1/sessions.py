@@ -9,9 +9,10 @@ from app.models.prediction_record import PredictionRecord
 from app.models.prediction_session import PredictionSession
 from app.models.user import User
 from app.schemas.history import PredictionRecordSummary
-from app.schemas.predict import PredictFrameRequest, PredictFrameResponse
-from app.schemas.session import SessionDetail, SessionStartRequest, SessionSummary
+from app.schemas.predict import PredictFrameRequest
+from app.schemas.session import SessionDetail, SessionPredictFrameResponse, SessionStartRequest, SessionSummary
 from app.services.predictor import PredictionValidationError, predict_frame
+from app.services.session_recognition import build_session_recognition_state
 
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -57,14 +58,14 @@ def start_session(
     return _build_session_summary(db, session_obj)
 
 
-@router.post("/{session_id}/predict-frame", response_model=PredictFrameResponse)
+@router.post("/{session_id}/predict-frame", response_model=SessionPredictFrameResponse)
 def predict_in_session(
     session_id: UUID,
     payload: PredictFrameRequest,
     db: DbSession,
     current_user: User = Depends(get_current_active_user),
-) -> PredictFrameResponse:
-    """Run a frame prediction and link the stored record to an active session."""
+) -> SessionPredictFrameResponse:
+    """Run a frame prediction, persist it, and compute script-inspired stabilized session state."""
     session_obj = _get_owned_session(db, session_id, current_user.id)
     if session_obj.status != "active":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Session is not active")
@@ -91,7 +92,26 @@ def predict_in_session(
     db.add(prediction_record)
     db.commit()
 
-    return PredictFrameResponse(**result)
+    session_records = db.scalars(
+        select(PredictionRecord)
+        .where(
+            PredictionRecord.user_id == current_user.id,
+            PredictionRecord.session_id == session_obj.id,
+        )
+        .order_by(PredictionRecord.created_at.asc())
+    ).all()
+    recognition_state = build_session_recognition_state(session_records)
+
+    return SessionPredictFrameResponse(
+        **result,
+        stable_label=recognition_state["stable_label"],
+        stable_arabic_label=recognition_state["stable_arabic_label"],
+        is_stable=recognition_state["is_stable"],
+        stable_count=recognition_state["stable_count"],
+        current_word=recognition_state["current_word"],
+        text_buffer=recognition_state["text_buffer"],
+        session_status=session_obj.status,
+    )
 
 
 @router.post("/{session_id}/end", response_model=SessionSummary)
@@ -145,11 +165,11 @@ def get_session_detail(
             PredictionRecord.user_id == current_user.id,
             PredictionRecord.session_id == session_obj.id,
         )
-        .order_by(PredictionRecord.created_at.desc())
-        .limit(10)
+        .order_by(PredictionRecord.created_at.asc())
     ).all()
 
     summary = _build_session_summary(db, session_obj)
+    recognition_state = build_session_recognition_state(prediction_records)
     recent_predictions = [
         PredictionRecordSummary(
             id=record.id,
@@ -160,7 +180,22 @@ def get_session_detail(
             client_timestamp=record.client_timestamp,
             created_at=record.created_at,
         )
-        for record in prediction_records
+        for record in reversed(prediction_records[-10:])
     ]
 
-    return SessionDetail(**summary.model_dump(), recent_predictions=recent_predictions)
+    return SessionDetail(
+        **summary.model_dump(),
+        recent_predictions=recent_predictions,
+        recent_raw_predictions_window=recognition_state["recent_raw_predictions_window"],
+        current_word=recognition_state["current_word"],
+        text_buffer=recognition_state["text_buffer"],
+        stable_label=recognition_state["stable_label"],
+        stable_arabic_label=recognition_state["stable_arabic_label"],
+        is_stable=recognition_state["is_stable"],
+        stable_count=recognition_state["stable_count"],
+        last_stable_label=recognition_state["last_stable_label"],
+        last_stable_arabic_label=recognition_state["last_stable_arabic_label"],
+        last_committed_label=recognition_state["last_committed_label"],
+        last_committed_arabic_label=recognition_state["last_committed_arabic_label"],
+        last_commit_timestamp=recognition_state["last_commit_timestamp"],
+    )
