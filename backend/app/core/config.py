@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-for-local-development"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    PREDICTION_CONFIDENCE_THRESHOLD: float = 0.45
 
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432

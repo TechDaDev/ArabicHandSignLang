@@ -34,3 +34,5 @@ class PredictFrameResponse(BaseModel):
     confidence: float
     top_predictions: list[TopPrediction]
     timestamp: datetime
+    is_confident: bool
+    confidence_threshold: float
